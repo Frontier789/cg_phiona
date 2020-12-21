@@ -1,4 +1,5 @@
-from car import car
+from model import *
+from camera import *
 
 import glfw
 from OpenGL.GL import *
@@ -12,22 +13,16 @@ from time import time
 
 class test:
     def __init__(self):
-        self.car = None
-        self.i   = 0
+        self.i = 0
+        pass
  
-    # draw frame
     def _draw_frame(self):
+        # self.car.angle += 0.03
         self.i += 1
-        
-        # create modelview matrix
-        model_view = translate(mat4(), vec3(0,0,-5)) * rotate(mat4(), self.i/30.0, vec3(0,1,0))
+        self.cam.position.y = sin(self.i/30)
  
-        # create projection matrix
-        proj = perspective(radians(60.0), 1024 / 768, 1, 100)
-        
-        self.car.render(model_view, proj)
+        self.car.render(self.cam.view(), self.cam.proj())
  
-        # swap buffers
         glfw.swap_buffers(self.window)
  
     # setup and run OpenGL
@@ -37,7 +32,9 @@ class test:
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
         
-        self.car = car()
+        self.car = model()
+        self.car.position = vec3(0,0,-5)
+        self.cam = camera()
         
         while not glfw.window_should_close(self.window):
             glClear(GL_COLOR_BUFFER_BIT)

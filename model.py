@@ -4,15 +4,18 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import *
 from glm import *
 
-class car:
+class model:
     def __init__(self):
-        poses = cube_positions()
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
+        
+        poses = cube_positions()
         self.vbo = self.__make_vbo(0,poses,3)
+        
         self.__create_shaders()
         self.model_matrix = mat4()
         self.position     = vec3()
+        self.angle        = 0.0
     
     def __make_vbo(self,id,data,dim):
         buffer = glGenBuffers(1)
@@ -31,10 +34,12 @@ class car:
             self.umodel_view = glGetUniformLocation(self.shader, "model_view")
     
     def render(self, view, proj):
-        """Render the car."""
-
+        """Render the model."""
+        
+        model = rotate(translate(mat4(), self.position),self.angle,vec3(0,1,0))
+        
         glUseProgram(self.shader)
-        glUniformMatrix4fv(self.umodel_view, 1, GL_FALSE, value_ptr(view))
+        glUniformMatrix4fv(self.umodel_view, 1, GL_FALSE, value_ptr(model * view))
         glUniformMatrix4fv(self.uproj, 1, GL_FALSE, value_ptr(proj))
 
         glBindVertexArray(self.vao)
@@ -43,6 +48,3 @@ class car:
         
 def cube_positions():
     return np.array([-1,-1,-1,-1,-1, 1,-1, 1, 1,1, 1,-1,-1,-1,-1,-1, 1,-1,1,-1, 1,-1,-1,-1,1,-1,-1,1, 1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1, 1,-1,1,-1, 1,-1,-1, 1,-1,-1,-1,-1, 1, 1,-1,-1, 1,1,-1, 1,1, 1, 1,1,-1,-1,1, 1,-1,1,-1,-1,1, 1, 1,1,-1, 1,1, 1, 1,1, 1,-1,-1, 1,-1,1, 1, 1,-1, 1,-1,-1, 1, 1,1, 1, 1,-1, 1, 1,1,-1, 1],np.float32)
-
-def test():
-    c = car()
