@@ -17,15 +17,15 @@ class test:
         pass
  
     def _draw_frame(self):
-        # self.car.angle += 0.03
+        self.car.angle += 0.03
         self.i += 1
-        self.cam.position.y = sin(self.i/30)
- 
-        self.car.render(self.cam.view(), self.cam.proj())
- 
+        # self.cam.position.y = sin(self.i/30)
+        
+        # self.cam.position.y += 0.3
+        self.cam.render(self.car)
+        
         glfw.swap_buffers(self.window)
  
-    # setup and run OpenGL
     def main(self):
         glfw.init()
         self.window = glfw.create_window(1024, 768, "Car racer", None, None)
@@ -35,13 +35,17 @@ class test:
         self.car = model()
         self.car.position = vec3(0,0,-5)
         self.cam = camera()
+        self.cam.position = vec3(0,5,0)
+        self.cam.target = self.car.position
+        
+        glEnable(GL_DEPTH_TEST)
+        glDepthFunc(GL_LEQUAL)
         
         while not glfw.window_should_close(self.window):
-            glClear(GL_COLOR_BUFFER_BIT)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self._draw_frame()
             glfw.poll_events()
 
-# run an instance of car
 test().main()
 
 

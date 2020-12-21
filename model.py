@@ -10,7 +10,10 @@ class model:
         glBindVertexArray(self.vao)
         
         poses = cube_positions()
-        self.vbo = self.__make_vbo(0,poses,3)
+        norms = cube_normals()
+        
+        self.poses = self.__make_vbo(0,poses,3)
+        self.norms = self.__make_vbo(1,norms,3)
         
         self.__create_shaders()
         self.model_matrix = mat4()
@@ -30,21 +33,49 @@ class model:
             frag = compileShader(ff.read(), GL_FRAGMENT_SHADER)
             
             self.shader = compileProgram(vert,frag)
-            self.uproj = glGetUniformLocation(self.shader, 'proj')
-            self.umodel_view = glGetUniformLocation(self.shader, "model_view")
+            self.uproj = glGetUniformLocation(self.shader, "proj")
+            self.umodel = glGetUniformLocation(self.shader, "model")
+            self.uview = glGetUniformLocation(self.shader, "view")
+            self.unorm = glGetUniformLocation(self.shader, "norm_mat")
     
     def render(self, view, proj):
         """Render the model."""
         
         model = rotate(translate(mat4(), self.position),self.angle,vec3(0,1,0))
+        normm = inverse(transpose(model))
         
         glUseProgram(self.shader)
-        glUniformMatrix4fv(self.umodel_view, 1, GL_FALSE, value_ptr(model * view))
+        glUniformMatrix4fv(self.umodel, 1, GL_FALSE, value_ptr(model))
+        glUniformMatrix4fv(self.uview, 1, GL_FALSE, value_ptr(view))
         glUniformMatrix4fv(self.uproj, 1, GL_FALSE, value_ptr(proj))
+        glUniformMatrix4fv(self.unorm, 1, GL_FALSE, value_ptr(normm))
 
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, 36)
         
         
 def cube_positions():
-    return np.array([-1,-1,-1,-1,-1, 1,-1, 1, 1,1, 1,-1,-1,-1,-1,-1, 1,-1,1,-1, 1,-1,-1,-1,1,-1,-1,1, 1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1, 1,-1,1,-1, 1,-1,-1, 1,-1,-1,-1,-1, 1, 1,-1,-1, 1,1,-1, 1,1, 1, 1,1,-1,-1,1, 1,-1,1,-1,-1,1, 1, 1,1,-1, 1,1, 1, 1,1, 1,-1,-1, 1,-1,1, 1, 1,-1, 1,-1,-1, 1, 1,1, 1, 1,-1, 1, 1,1,-1, 1],np.float32)
+    return np.array([-1,-1,-1,  -1,-1, 1,  -1, 1, 1, 
+                      1, 1,-1,  -1,-1,-1,  -1, 1,-1,
+                      1,-1, 1,  -1,-1,-1,   1,-1,-1,
+                      1, 1,-1,   1,-1,-1,  -1,-1,-1,
+                     -1,-1,-1,  -1, 1, 1,  -1, 1,-1,
+                      1,-1, 1,  -1,-1, 1,  -1,-1,-1,
+                     -1, 1, 1,  -1,-1, 1,   1,-1, 1,
+                      1, 1, 1,   1,-1,-1,   1, 1,-1,
+                      1,-1,-1,   1, 1, 1,   1,-1, 1,
+                      1, 1, 1,   1, 1,-1,  -1, 1,-1,
+                      1, 1, 1,  -1, 1,-1,  -1, 1, 1,
+                      1, 1, 1,  -1, 1, 1,   1,-1, 1],np.float32)
+
+def cube_normals():
+    p = cube_positions()
+    a = []
+    for i in range(len(p) // 9):
+        A = vec3(p[i*9 + 0],p[i*9 + 1],p[i*9 + 2])
+        B = vec3(p[i*9 + 3],p[i*9 + 4],p[i*9 + 5])
+        C = vec3(p[i*9 + 6],p[i*9 + 7],p[i*9 + 8])
+        n = normalize(cross(A-B,A-C)).to_list()
+        a = a + n + n + n
+        
+    return np.array(a, np.float32)

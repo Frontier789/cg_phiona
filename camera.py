@@ -15,7 +15,7 @@ class camera:
         return perspective(self.fov, self.aspect, self.znear, self.zfar)
     
     def view(self):
-        v = normalize(self.target - self.position)
-        r = normalize(cross(v,self.up))
-        u = cross(r,v)
-        return inverse(mat4(vec4(r,0),vec4(u,0),vec4(-v,0), vec4(0,0,0,1))) * translate(mat4(), -self.position)
+        return lookAt(self.position, self.target, self.up)
+    
+    def render(self,model):
+        model.render(self.view(), self.proj())

@@ -1,4 +1,4 @@
-pip install glfw PyGLM PyOpenGL
+pip install glfw PyGLM PyOpenGL glm numpy
 
 modules:
 - model
