@@ -6,10 +6,11 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GL.shaders import *
 import numpy as np
-import math
+from math import *
 from PIL import Image
 from glm import *
 from time import time
+from random import random
 
 class test:
     def __init__(self):
@@ -17,13 +18,15 @@ class test:
         pass
  
     def _draw_frame(self):
-        self.car.angle += 0.03
         self.i += 1
         # self.cam.position.y = sin(self.i/30)
         
         # self.cam.position.y += 0.3
-        for i in range(len(self.car_poses)):
-            self.car.position = self.car_poses[i] + vec3(0,0,sin(self.i/30 + i/3 + self.i*i/300)*1)
+        for i in range(len(self.car_colors)):
+            angle = self.i/30 + math.pi*2.0/len(self.car_colors) * i
+            self.car.position = vec3(0,0,-5) + vec3(cos(angle),0,sin(angle)) * 3
+            self.car.angle = -angle
+            self.car.set_color(self.car_colors[i])
             self.cam.render(self.car)
         
         glfw.swap_buffers(self.window)
@@ -34,9 +37,9 @@ class test:
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
         
-        self.car_poses = []
-        for i in range(11):
-            self.car_poses.append(vec3(i-5,0,-5))
+        self.car_colors = []
+        for i in range(7):
+            self.car_colors.append(random())
         
         self.car = model('models/Chevrolet_Camaro_SS_Low.obj')
         # self.car = model('cube')

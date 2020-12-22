@@ -7,6 +7,7 @@ from pywavefront import *
 from ctypes import c_float, c_uint16, c_void_p, cast, sizeof
 import logging
 from draw import draw
+from colorsys import rgb_to_hsv, hsv_to_rgb
 
 logging.getLogger("pywavefront").setLevel(logging.ERROR)
 
@@ -15,10 +16,16 @@ def gen_vao():
     glBindVertexArray(vao)
     return vao
 
+def rotate_clr(clr,r):
+    hsv = list(rgb_to_hsv(clr.x,clr.y,clr.z))
+    hsv[0] = (hsv[0] + r + 1) % 1.0
+    return vec3(hsv_to_rgb(*hsv))
+
 class model:
     def __init__(self, name):
         self.buffers = []
         self.draws   = []
+        self.color   = 0.0
         
         if name == 'cube':
             poses = cube_positions()
@@ -29,13 +36,11 @@ class model:
             self.__make_cube_vbo(1,norms,3)
             self.draws.append(draw(vao, 36, vec3(0.06), vec3(0.5), vec3(1)))
         else:
-            vertices = []
             scene = Wavefront(name)
             for mesh in scene.mesh_list:
                 for mat in mesh.materials:
                     if mat.vertex_format == 'N3F_V3F':
                         self.__add_drawmat(mat)
-                        vertices = vertices + mat.vertices
                     else:
                         print("unhandled vertex format: ", mat.vertex_format)
         
@@ -44,6 +49,11 @@ class model:
         self.position     = vec3()
         self.angle        = 0.0
         self.scale        = vec3(1)
+    
+    def set_color(self,color):
+        for d in self.draws:
+            d.Kd = rotate_clr(d.Kd, color - self.color)
+        self.color = color
     
     def __add_drawmat(self,mat):
         vao = gen_vao()
