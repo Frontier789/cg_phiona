@@ -6,54 +6,58 @@ from glm import *
 from pywavefront import *
 from ctypes import c_float, c_uint16, c_void_p, cast, sizeof
 import logging
+from draw import draw
 
 logging.getLogger("pywavefront").setLevel(logging.ERROR)
 
+def gen_vao():
+    vao = glGenVertexArrays(1)
+    glBindVertexArray(vao)
+    return vao
+
 class model:
     def __init__(self, name):
-        self.vao = glGenVertexArrays(1)
-        glBindVertexArray(self.vao)
-        
         self.buffers = []
+        self.draws   = []
         
         if name == 'cube':
             poses = cube_positions()
             norms = cube_normals()
             
+            vao = gen_vao()
             self.__make_cube_vbo(0,poses,3)
             self.__make_cube_vbo(1,norms,3)
-            self.vert_count = 36
+            self.draws.append(draw(vao, 36, vec3(0.06), vec3(0.5), vec3(1)))
         else:
             vertices = []
             scene = Wavefront(name)
             for mesh in scene.mesh_list:
                 for mat in mesh.materials:
                     if mat.vertex_format == 'N3F_V3F':
+                        self.__add_drawmat(mat)
                         vertices = vertices + mat.vertices
-                        # break
                     else:
                         print("unhandled vertex format: ", mat.vertex_format)
-                # break
-            
-            self.vert_count = len(vertices)//6
-            data = np.array(vertices, np.float32)
-            buffer = glGenBuffers(1)
-            glBindBuffer(GL_ARRAY_BUFFER, buffer)
-            glBufferData(GL_ARRAY_BUFFER, 4 * len(data), data, GL_STATIC_DRAW)
-            
-            glEnableVertexAttribArray(0)
-            glEnableVertexAttribArray(1)
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * 4, cast(3 * 4, c_void_p))
-            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * 4, None)
-            self.buffers.append(buffer)
-            
-            
         
         self.__create_shaders()
         self.model_matrix = mat4()
         self.position     = vec3()
         self.angle        = 0.0
         self.scale        = vec3(1)
+    
+    def __add_drawmat(self,mat):
+        vao = gen_vao()
+        self.draws.append(draw(vao, len(mat.vertices)//6, vec3(mat.ambient), vec3(mat.diffuse), vec3(mat.specular)))
+        data = np.array(mat.vertices, np.float32)
+        buffer = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, buffer)
+        glBufferData(GL_ARRAY_BUFFER, 4 * len(data), data, GL_STATIC_DRAW)
+        
+        glEnableVertexAttribArray(0)
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * 4, cast(3 * 4, c_void_p))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * 4, None)
+        self.buffers.append(buffer)
     
     def __make_cube_vbo(self,id,data,dim):
         buffer = glGenBuffers(1)
@@ -73,6 +77,9 @@ class model:
             self.umodel = glGetUniformLocation(self.shader, "model")
             self.uview = glGetUniformLocation(self.shader, "view")
             self.unorm = glGetUniformLocation(self.shader, "norm_mat")
+            self.uKa = glGetUniformLocation(self.shader, "Ka")
+            self.uKd = glGetUniformLocation(self.shader, "Kd")
+            self.uKs = glGetUniformLocation(self.shader, "Ks")
     
     def render(self, view, proj):
         """Render the model."""
@@ -85,9 +92,13 @@ class model:
         glUniformMatrix4fv(self.uview, 1, GL_FALSE, value_ptr(view))
         glUniformMatrix4fv(self.uproj, 1, GL_FALSE, value_ptr(proj))
         glUniformMatrix4fv(self.unorm, 1, GL_FALSE, value_ptr(normm))
-
-        glBindVertexArray(self.vao)
-        glDrawArrays(GL_TRIANGLES, 0, self.vert_count)
+        
+        for d in self.draws:
+            glBindVertexArray(d.vao)
+            glUniform3f(self.uKa, d.Ka.x,d.Ka.y,d.Ka.z)
+            glUniform3f(self.uKd, d.Kd.x,d.Kd.y,d.Kd.z)
+            glUniform3f(self.uKs, d.Ks.x,d.Ks.y,d.Ks.z)
+            glDrawArrays(GL_TRIANGLES, 0, d.vert_count)
         
         
 def cube_positions():

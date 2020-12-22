@@ -23,7 +23,7 @@ class test:
         
         # self.cam.position.y += 0.3
         for i in range(len(self.car_poses)):
-            self.car.position = self.car_poses[i] + vec3(0,0,sin(self.i/30+i/3)*1)
+            self.car.position = self.car_poses[i] + vec3(0,0,sin(self.i/30 + i/3 + self.i*i/300)*1)
             self.cam.render(self.car)
         
         glfw.swap_buffers(self.window)
