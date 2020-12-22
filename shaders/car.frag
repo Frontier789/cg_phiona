@@ -12,4 +12,6 @@ void main()
     float dp = dot(N,L);
     
     clr = vec4(vec3(max(dp,0.1)), 1);
+    
+    // clr = vec4(1,1,1,1);
 }

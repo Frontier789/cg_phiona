@@ -1,4 +1,4 @@
-pip install glfw PyGLM PyOpenGL glm numpy
+pip install glfw PyGLM PyOpenGL glm numpy pywavefront
 
 modules:
 - model
