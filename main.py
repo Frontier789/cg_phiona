@@ -12,10 +12,14 @@ from glm import *
 from time import time
 from random import random, randint, choice
 from sky import sky
+from road import road
 
 class View:
-    GLOBAL = 1
-    FOLLOW_CAR = 2
+    GLOBAL = 0
+    FOLLOW_CAR = 1
+    NUM_VIEWS = 2
+    def next_view(self):
+        return (self + 1) % View.NUM_VIEWS
 
 class car_state:
     def __init__(self, pos, t=1.0, color = None):
@@ -45,7 +49,7 @@ lanes    = 4
 arc_len  = 0.1
 car_size = 0.03
 car_speed   = 0.2
-lane_width  = 0.1
+lane_width  = 0.15
 ring_radius = 2.0
 def cp_wp(p,t):
     angle = math.pi * 2.0 * (t *car_speed + p.y / (lanes - 1) * arc_len)
@@ -59,7 +63,8 @@ class test:
         self.i = 0
         self.clock = time()
         self.start_time = time()
-        self.view = View.GLOBAL
+        self.view = View.FOLLOW_CAR
+        self.done = False
         pass
  
     def __draw_frame(self):
@@ -69,8 +74,11 @@ class test:
         
         self.__update_cam(t)
         self.__update_cars(t)
+        self.road.set_time(t - self.start_time)
+        
         self.__render_cars(t)
-        self.__render_sky()
+        self.cam.render(self.sky)
+        self.cam.render(self.road)
         
         glfw.swap_buffers(self.window)
     
@@ -82,7 +90,7 @@ class test:
             self.car.angle = a
             d = normalize(vec3(self.car.model_matrix() * vec4(0,0,-1,0)))
             u = vec3(0,1,0)
-            self.cam.position = p + d + u / 3 * sin(self.i / 30)
+            self.cam.position = p + d + u / 3 * (1 + 0.1 * sin(self.i / 30) * (1 + sin(self.i / 100)) )
             self.cam.target = p
         if self.view == View.GLOBAL:
             self.cam.position = vec3(0,3,0)
@@ -95,9 +103,6 @@ class test:
             self.car.angle = a
             self.car.set_color(s.color)
             self.cam.render(self.car)
-    
-    def __render_sky(self):
-        self.cam.render(self.sky)
     
     def __update_cars(self,t):
         if t - self.clock > 0.1:
@@ -126,16 +131,25 @@ class test:
             p = vec2(randint(0,lanes-1), randint(0, max_y-1))
             self.car_states.append(car_state(p))
     
+    def onkey(self, win, key, scancode, action, mod):
+        if action == glfw.PRESS:
+            if key == glfw.KEY_ESCAPE: 
+                self.done = True
+            elif key == glfw.KEY_C:
+                self.view = View.next_view(self.view)
+    
     def main(self):
         glfw.init()
         self.window = glfw.create_window(1024, 768, "Car racer", None, None)
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
+        glfw.set_key_callback(self.window, self.onkey)
         
         self.car = model('models/Chevrolet_Camaro_SS_Low.obj')
         self.car.scale = vec3(car_size)
         
         self.sky = sky()
+        self.road = road(car_speed,lanes,arc_len,ring_radius,lane_width,max_y)
         
         self.gen_car_states()
         
@@ -146,10 +160,11 @@ class test:
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
         
-        while not glfw.window_should_close(self.window):
+        while not glfw.window_should_close(self.window) and not self.done:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.__draw_frame()
             glfw.poll_events()
+        
 
 test().main()
 

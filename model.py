@@ -49,10 +49,6 @@ class model:
         self.angle        = 0.0
         self.scale        = vec3(1)
     
-    def __del__(self):
-        glDeleteBuffers(len(self.buffers), self.buffers)
-        glDeleteVertexArrays(len(self.draws), [d.vao for d in self.draws])
-    
     def set_color(self,color):
         for d in self.draws:
             d.Kd = rotate_clr(d.Kd, color - self.color)
