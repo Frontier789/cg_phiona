@@ -32,7 +32,7 @@ class road:
         self.vao = gen_vao()
         self.__make_road_vbo(0,np.array(poses,np.float32),2)
         
-        self.__create_shaders(car_speed,lanes,arc_len,ring_radius,lane_width)
+        self.__create_shaders(car_speed,lanes,arc_len,ring_radius,lane_width,max_y)
     
     def __make_road_vbo(self,id,data,dim):
         buffer = glGenBuffers(1)
@@ -42,7 +42,7 @@ class road:
         glBufferData(GL_ARRAY_BUFFER, 4 * len(data), data, GL_STATIC_DRAW)
         self.buffers.append(buffer)
     
-    def __create_shaders(self,car_speed,lanes,arc_len,ring_radius,lane_width):
+    def __create_shaders(self,car_speed,lanes,arc_len,ring_radius,lane_width,max_y):
         with open("shaders/road.vert",'r') as fv, open("shaders/road.frag",'r') as ff:
             vert = compileShader(fv.read(), GL_VERTEX_SHADER)
             frag = compileShader(ff.read(), GL_FRAGMENT_SHADER)
@@ -59,6 +59,7 @@ class road:
             set_u(arc_len,"arc_len")
             set_u(ring_radius,"ring_radius")
             set_u(lane_width,"lane_width")
+            set_u(max_y,"max_y")
             
             self.ut = glGetUniformLocation(self.shader, "t")
     

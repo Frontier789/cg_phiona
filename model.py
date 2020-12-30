@@ -91,12 +91,15 @@ class model:
             self.uKa = glGetUniformLocation(self.shader, "Ka")
             self.uKd = glGetUniformLocation(self.shader, "Kd")
             self.uKs = glGetUniformLocation(self.shader, "Ks")
+            self.ucam_pos = glGetUniformLocation(self.shader, "cam_pos")
     
     def model_matrix(self):
         return scale(rotate(translate(mat4(), self.position),self.angle,vec3(0,1,0)),self.scale)
     
     def render(self, view, proj):
         """Render the model."""
+        
+        cam_pos = vec3(view * vec4(0,0,0,-1))
         
         model = self.model_matrix()
         normm = inverse(transpose(model))
@@ -106,6 +109,8 @@ class model:
         glUniformMatrix4fv(self.uview, 1, GL_FALSE, value_ptr(view))
         glUniformMatrix4fv(self.uproj, 1, GL_FALSE, value_ptr(proj))
         glUniformMatrix4fv(self.unorm, 1, GL_FALSE, value_ptr(normm))
+        
+        glUniform3f(self.ucam_pos, cam_pos.x,cam_pos.y,cam_pos.z)
         
         for d in self.draws:
             glBindVertexArray(d.vao)

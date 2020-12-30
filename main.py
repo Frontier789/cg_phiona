@@ -101,8 +101,13 @@ class test:
             self.cam.position = p + d + u / 3 * (1 + 0.1 * sin(self.i / 30) * (1 + sin(self.i / 100)) )
             self.cam.target = p
         if self.view == View.GLOBAL:
-            self.cam.position = vec3(0,3,0)
-            self.cam.target = vec3(0,0,-5)
+            p,a = cp_wp_a(vec2(lanes/2, max_y/2), t - self.start_time)
+            self.car.position = p
+            self.car.angle = a
+            d = normalize(vec3(self.car.model_matrix() * vec4(0,0,-1,0)))
+            u = vec3(0,1,0)
+            self.cam.position = p + d * 3 + u
+            self.cam.target = p
     
     def __render_cars(self,t):
         for s in self.car_states:
@@ -155,6 +160,9 @@ class test:
         
         self.car = model('models/Chevrolet_Camaro_SS_Low.obj')
         self.car.scale = vec3(car_size)
+        
+        # self.car = model('cube')
+        # self.car.scale = vec3(0.08,0.01,0.18)
         
         self.sky = sky()
         self.road = road(car_speed,lanes,arc_len,ring_radius,lane_width,max_y)

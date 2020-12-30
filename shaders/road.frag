@@ -4,6 +4,8 @@ uniform float t;
 uniform float lanes;
 uniform float car_speed;
 uniform float ring_radius;
+uniform float max_y;
+const vec3 ground_color = vec3(113.0, 108.0, 105.0)/255.0/4.0;
 
 in vec2 tpt;
 
@@ -43,5 +45,10 @@ void main()
         g = 1.0;
     }
     
-    clr = vec4(vec3(f * g),1);
+    float fog = 0.0;
+    if (tpt.y > max_y) {
+        fog = clamp(tpt.y / max_y - 1.0,0.0,1.0);
+    }
+    
+    clr = vec4(mix(vec3(f * g), ground_color, fog),1);
 }
