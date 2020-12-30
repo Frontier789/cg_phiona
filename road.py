@@ -19,7 +19,7 @@ class road:
         poses = []
         mul = 10
         extx = 0.2
-        exty = 3
+        exty = 20
         
         for j in range(max_y * mul + exty * 2 * mul):
             poses.append(0 - 0.5 - extx)

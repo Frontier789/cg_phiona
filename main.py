@@ -46,14 +46,22 @@ class car_state:
 num_cars = 13
 max_y    = 14
 lanes    = 4
-arc_len  = 0.1
+arc_len  = 0.15
 car_size = 0.03
 car_speed   = 0.2
 lane_width  = 0.15
 ring_radius = 2.0
 def cp_wp(p,t):
     angle = math.pi * 2.0 * (t *car_speed + p.y / (lanes - 1) * arc_len)
-    return vec3(0,0,-5) + vec3(cos(angle), 0, sin(angle)) * (ring_radius + p.x * lane_width), -angle
+    # return vec3(0,0,-5) + vec3(cos(angle), 0, sin(angle)) * (ring_radius + p.x * lane_width)
+    # return vec3(0,0,-5) + vec3(cos(angle), 0, angle) * (ring_radius + p.x * lane_width + sin(angle * 10.0)*0.2)
+    return vec3(p.x * lane_width + sin(angle / 5.0) * 2.0,-0.04,angle)
+
+def cp_wp_a(p,t):
+    p1 = cp_wp(p,t)
+    p2 = cp_wp(p,t+0.01)
+    v = normalize(p2 - p1)
+    return p1, atan2(-v.z,v.x) + math.pi/2
 
 def in_bounds(p):
     return p.x >= 0 and p.x < lanes and p.y >= 0 and p.y < max_y
@@ -85,7 +93,7 @@ class test:
     def __update_cam(self,t):
         if self.view == View.FOLLOW_CAR:
             car = self.car_states[0]
-            p,a = cp_wp(car.curpos(t), t - self.start_time)
+            p,a = cp_wp_a(car.curpos(t), t - self.start_time)
             self.car.position = p
             self.car.angle = a
             d = normalize(vec3(self.car.model_matrix() * vec4(0,0,-1,0)))
@@ -98,7 +106,7 @@ class test:
     
     def __render_cars(self,t):
         for s in self.car_states:
-            p,a = cp_wp(s.curpos(t), t - self.start_time)
+            p,a = cp_wp_a(s.curpos(t), t - self.start_time)
             self.car.position = p
             self.car.angle = a
             self.car.set_color(s.color)

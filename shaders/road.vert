@@ -17,7 +17,8 @@ out vec2 tpt;
 
 vec3 cp_wp(vec2 p) {
     float angle = PI * 2.0 * (t * car_speed + p.y / (lanes - 1.0) * arc_len);
-    return vec3(0.0,-0.04,-5.0) + vec3(cos(angle), 0, sin(angle)) * (ring_radius + p.x * lane_width);
+    // return vec3(0.0,-0.04,-5.0) + vec3(cos(angle), 0, sin(angle)) * (ring_radius + p.x * lane_width);
+    return vec3(p.x * lane_width + sin(angle / 5.0) * 2.0,-0.04,angle);
 }
 
 void main() {
