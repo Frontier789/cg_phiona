@@ -34,7 +34,7 @@ class model:
             vao = gen_vao()
             self.__make_cube_vbo(0,poses,3)
             self.__make_cube_vbo(1,norms,3)
-            self.draws.append(draw(vao, 36, vec3(0.06), vec3(0.5), vec3(1)))
+            self.draws.append(draw(vao, 36, vec3(0.5,0.15,0.1)*5, vec3(0.5,0.15,0.1), vec3(1)))
         else:
             scene = Wavefront(name)
             for mesh in scene.mesh_list:
@@ -45,14 +45,19 @@ class model:
                         print("unhandled vertex format: ", mat.vertex_format)
         
         self.__create_shaders()
-        self.model_matrix = mat4()
         self.position     = vec3()
         self.angle        = 0.0
         self.scale        = vec3(1)
     
+    def __del__(self):
+        glDeleteBuffers(len(self.buffers), self.buffers)
+        glDeleteVertexArrays(len(self.draws), [d.vao for d in self.draws])
+    
     def set_color(self,color):
         for d in self.draws:
             d.Kd = rotate_clr(d.Kd, color - self.color)
+            d.Ka = rotate_clr(d.Ka, color - self.color)
+            d.Ks = rotate_clr(d.Ks, color - self.color)
         self.color = color
     
     def __add_drawmat(self,mat):
@@ -91,10 +96,13 @@ class model:
             self.uKd = glGetUniformLocation(self.shader, "Kd")
             self.uKs = glGetUniformLocation(self.shader, "Ks")
     
+    def model_matrix(self):
+        return scale(rotate(translate(mat4(), self.position),self.angle,vec3(0,1,0)),self.scale)
+    
     def render(self, view, proj):
         """Render the model."""
         
-        model = scale(rotate(translate(mat4(), self.position),self.angle,vec3(0,1,0)),self.scale)
+        model = self.model_matrix()
         normm = inverse(transpose(model))
         
         glUseProgram(self.shader)

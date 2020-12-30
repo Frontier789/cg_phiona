@@ -8,7 +8,7 @@ class camera:
         self.up       = vec3(0,1,0)
         self.fov      = radians(60.0)
         self.aspect   = 1024 / 768
-        self.znear    = 1
+        self.znear    = 0.1
         self.zfar     = 100
     
     def proj(self):

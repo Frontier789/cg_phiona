@@ -11,6 +11,11 @@ from PIL import Image
 from glm import *
 from time import time
 from random import random, randint, choice
+from sky import sky
+
+class View:
+    GLOBAL = 1
+    FOLLOW_CAR = 2
 
 class car_state:
     def __init__(self, pos, t=1.0, color = None):
@@ -24,20 +29,21 @@ class car_state:
         self.move(self.target + delta)
     
     def move(self, pos):
-        self.pos    = self.curpos()
+        self.pos    = self.curpos(time())
         self.target = pos
         self.clock  = time()
     
-    def curpos(self):
-        r = (time() - self.clock) / self.tt
+    def curpos(self,t):
+        r = (t - self.clock) / self.tt
         if r > 1.0:
             return self.target
         return self.target * r + self.pos * (1.0 - r)
 
-num_cars = 30
+num_cars = 13
 max_y    = 14
 lanes    = 4
 arc_len  = 0.1
+car_size = 0.03
 car_speed   = 0.2
 lane_width  = 0.1
 ring_radius = 2.0
@@ -53,21 +59,48 @@ class test:
         self.i = 0
         self.clock = time()
         self.start_time = time()
+        self.view = View.GLOBAL
         pass
  
-    def _draw_frame(self):
+    def __draw_frame(self):
         self.i += 1
-        # self.cam.position.y = sin(self.i/30)
         
-        # self.cam.position.y += 0.3
+        t = time()
+        
+        self.__update_cam(t)
+        self.__update_cars(t)
+        self.__render_cars(t)
+        self.__render_sky()
+        
+        glfw.swap_buffers(self.window)
+    
+    def __update_cam(self,t):
+        if self.view == View.FOLLOW_CAR:
+            car = self.car_states[0]
+            p,a = cp_wp(car.curpos(t), t - self.start_time)
+            self.car.position = p
+            self.car.angle = a
+            d = normalize(vec3(self.car.model_matrix() * vec4(0,0,-1,0)))
+            u = vec3(0,1,0)
+            self.cam.position = p + d + u / 3 * sin(self.i / 30)
+            self.cam.target = p
+        if self.view == View.GLOBAL:
+            self.cam.position = vec3(0,3,0)
+            self.cam.target = vec3(0,0,-5)
+    
+    def __render_cars(self,t):
         for s in self.car_states:
-            p,a = cp_wp(s.curpos(), time() - self.start_time)
+            p,a = cp_wp(s.curpos(t), t - self.start_time)
             self.car.position = p
             self.car.angle = a
             self.car.set_color(s.color)
             self.cam.render(self.car)
-        
-        if time() - self.clock > 0.01:
+    
+    def __render_sky(self):
+        self.cam.render(self.sky)
+    
+    def __update_cars(self,t):
+        if t - self.clock > 0.1:
             if random() < 0.9:
                 i = randint(0, num_cars-1)
                 d = [vec2(1,0),vec2(-1,0),vec2(0,1),vec2(0,-1)]
@@ -78,9 +111,7 @@ class test:
                         ok = ok and not self.cars_close(i,j,d)
                     if ok:
                         self.car_states[i].move_delta(d)
-            self.clock = time()
-        
-        glfw.swap_buffers(self.window)
+            self.clock = t
     
     def cars_close(self,i,j,d):
         if i == j:
@@ -102,7 +133,9 @@ class test:
         glfw.swap_interval(1)
         
         self.car = model('models/Chevrolet_Camaro_SS_Low.obj')
-        self.car.scale = vec3(0.03)
+        self.car.scale = vec3(car_size)
+        
+        self.sky = sky()
         
         self.gen_car_states()
         
@@ -115,7 +148,7 @@ class test:
         
         while not glfw.window_should_close(self.window):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self._draw_frame()
+            self.__draw_frame()
             glfw.poll_events()
 
 test().main()
