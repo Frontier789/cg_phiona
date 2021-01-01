@@ -31,7 +31,7 @@ void main()
         f = 0.0;
     }
     
-    float g = fract(tpt.y + PI * 2.0 * t * car_speed * 4.8);
+    float g = fract(tpt.y + PI * 2.0 * t * car_speed * 3.18);
     g = 1.0 - 2.0 * abs(g - 0.5);
     if (g > 1.0 - STRIP_LENGTH) {
         g = 1.0;
@@ -47,7 +47,7 @@ void main()
     
     float fog = 0.0;
     if (tpt.y > max_y) {
-        fog = clamp(tpt.y / max_y - 1.0,0.0,1.0);
+        fog = clamp(tpt.y / max_y / 1.3 - 1.0,0.0,1.0);
     }
     
     clr = vec4(mix(vec3(f * g), ground_color, fog),1);

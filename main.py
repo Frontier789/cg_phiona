@@ -11,7 +11,7 @@ from PIL import Image
 from glm import *
 from time import time
 from random import random, randint, choice
-from sky import sky
+from envbox import envbox
 from road import road
 
 class View:
@@ -73,6 +73,7 @@ class test:
         self.start_time = time()
         self.view = View.FOLLOW_CAR
         self.done = False
+        self.move_cam = True
         pass
  
     def __draw_frame(self):
@@ -80,12 +81,13 @@ class test:
         
         t = time()
         
-        self.__update_cam(t)
+        if self.move_cam:
+            self.__update_cam(t)
         self.__update_cars(t)
         self.road.set_time(t - self.start_time)
         
         self.__render_cars(t)
-        self.cam.render(self.sky)
+        self.cam.render(self.envbox)
         self.cam.render(self.road)
         
         glfw.swap_buffers(self.window)
@@ -108,6 +110,8 @@ class test:
             u = vec3(0,1,0)
             self.cam.position = p + d * 3 + u
             self.cam.target = p
+        
+        self.envbox.set_cam_pos(self.cam.position)
     
     def __render_cars(self,t):
         for s in self.car_states:
@@ -118,7 +122,7 @@ class test:
             self.cam.render(self.car)
     
     def __update_cars(self,t):
-        if t - self.clock > 0.1:
+        if t - self.clock > 0.03:
             if random() < 0.9:
                 i = randint(0, num_cars-1)
                 d = [vec2(1,0),vec2(-1,0),vec2(0,1),vec2(0,-1)]
@@ -150,6 +154,12 @@ class test:
                 self.done = True
             elif key == glfw.KEY_C:
                 self.view = View.next_view(self.view)
+            elif key == glfw.KEY_X:
+                self.move_cam = not self.move_cam
+    
+    def onresize(self, win, w, h):
+        glViewport(0, 0, w, h)
+        self.cam.aspect = w / h
     
     def main(self):
         glfw.init()
@@ -157,6 +167,7 @@ class test:
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
         glfw.set_key_callback(self.window, self.onkey)
+        glfw.set_framebuffer_size_callback(self.window, self.onresize)
         
         self.car = model('models/Chevrolet_Camaro_SS_Low.obj')
         self.car.scale = vec3(car_size)
@@ -164,7 +175,7 @@ class test:
         # self.car = model('cube')
         # self.car.scale = vec3(0.08,0.01,0.18)
         
-        self.sky = sky()
+        self.envbox = envbox()
         self.road = road(car_speed,lanes,arc_len,ring_radius,lane_width,max_y)
         
         self.gen_car_states()
