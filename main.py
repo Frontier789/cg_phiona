@@ -14,6 +14,14 @@ from random import random, randint, choice
 from envbox import envbox
 from road import road
 
+num_cars = 13
+max_y    = 14
+lanes    = 4
+arc_len  = 0.15
+car_size = 0.03
+car_speed   = 0.3
+lane_width  = 0.2
+
 class View:
     GLOBAL = 0
     FOLLOW_CAR = 1
@@ -43,14 +51,6 @@ class car_state:
             return self.target
         return self.target * r + self.pos * (1.0 - r)
 
-num_cars = 13
-max_y    = 14
-lanes    = 4
-arc_len  = 0.15
-car_size = 0.03
-car_speed   = 0.2
-lane_width  = 0.15
-ring_radius = 2.0
 def cp_wp(p,t):
     angle = math.pi * 2.0 * (t *car_speed + p.y / (lanes - 1) * arc_len)
     # return vec3(0,0,-5) + vec3(cos(angle), 0, sin(angle)) * (ring_radius + p.x * lane_width)
@@ -66,7 +66,7 @@ def cp_wp_a(p,t):
 def in_bounds(p):
     return p.x >= 0 and p.x < lanes and p.y >= 0 and p.y < max_y
 
-class test:
+class runner:
     def __init__(self):
         self.i = 0
         self.clock = time()
@@ -176,7 +176,7 @@ class test:
         # self.car.scale = vec3(0.08,0.01,0.18)
         
         self.envbox = envbox()
-        self.road = road(car_speed,lanes,arc_len,ring_radius,lane_width,max_y)
+        self.road = road(car_speed,lanes,arc_len,lane_width,max_y)
         
         self.gen_car_states()
         
@@ -193,6 +193,6 @@ class test:
             glfw.poll_events()
         
 
-test().main()
+runner().main()
 
 
